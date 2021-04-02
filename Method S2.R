@@ -1,7 +1,6 @@
 
 #functions
 
-	#
 	predict_stat<-function(predicted){
 				
 		predicted_cnt<-as.matrix(table(predicted))
@@ -42,8 +41,6 @@
 		#prediction
 		constant_positive_prediction<-c()
 		constant_negative_prediction<-c()
-	#	constant_top_ten_percent<-c()
-	#	constant_bottom_ten_percent<-c()
 		
 		mean_accuracy<-c()
 		mean_true_prediction<-c()
@@ -51,7 +48,6 @@
 	
 		for(j in 1:10){  #10 rounds
 		
-				#
 				accuracy<-c()
 				positive<-c()
 				negative<-c()
@@ -98,7 +94,6 @@
 						
 						###########
 						
-						testdata<-rbind(validate_x1,y2_test,testdata)
 				
 						# test
 						test <- predict(object = model, newdata = testdata[,-1])
@@ -109,22 +104,15 @@
 						positive<-rbind(positive,as.matrix(true_positive))
 						negative<-rbind(negative,as.matrix(true_negative))
 
-						#how often are group 1 FBX genes discovered at one run
-						true_x1<-length(true_positive[true_positive%in%rownames(x1)])	
-						true_x1_rate<-true_x1/dim(validate_x1)[1]
-		
+							
 						#how often are group 2 FBX genes discovered at one run
-						#the discrepancy would reflect the biochemical difference between group 1 and group 2 FBX proteins
 						true_x2<-length(true_positive[true_positive%in%rownames(x2)])	
 						true_x2_rate<-true_x2/dim(x2)[1]
 				
 						true_y1<-length(true_positive[true_positive%in%rownames(y1)])	
 						true_y1_rate<-true_y1/dim(y1)[1]
-				
-						true_y2<-length(true_positive[true_positive%in%rownames(y2)])	
-						true_y2_rate<-true_y2/dim(y2_test)[1]
-	
-						true_prediction_rate<-cbind(true_x1_rate,true_x2_rate,true_y1_rate,true_y2_rate)
+					
+						true_prediction_rate<-cbind(true_x2_rate,true_y1_rate)
 		
 						true_prediction<-rbind(true_prediction,true_prediction_rate)	
 						
@@ -192,8 +180,8 @@
 
 			x1<-x[1:41,]
 			x2<-x[42:dim(x)[1],]
-			y1<-y[1:469,]
-			y2<-y[470:dim(y)[1],]
+			y1<-y[1:470,]
+			y2<-y[471:dim(y)[1],]
 			
 			#library
 			library("neuralnet")
@@ -201,8 +189,7 @@
 			#prediction
 			constant_positive_prediction<-c()
 			constant_negative_prediction<-c()
-		#	constant_top_ten_percent<-c()
-		#	constant_bottom_ten_percent<-c()
+
 	
 			mean_accuracy<-c()
 			mean_true_prediction<-c()
@@ -255,10 +242,6 @@
 
 				         #### final test ####
 		 
-						 #we combine validating FBXes of group 1 and y2_test with testdata as an internal control 
-						 #to further examine false negative and positive rates	 
-						testdata<-rbind(validate_x1,y2_test,testdata)
-			
 						# test
 						test <- compute(nn, testdata[, -1])
 						test_prediction <- test$net.result
@@ -271,22 +254,15 @@
 						positive<-rbind(positive,as.matrix(true_positive))
 						negative<-rbind(negative,as.matrix(true_negative))
 
-						#how often are group 1 FBX genes discovered at one run
-						true_x1<-length(true_positive[true_positive%in%rownames(x1)])	
-						true_x1_rate<-true_x1/dim(validate_x1)[1]
-	
+				
 						#how often are group 2 FBX genes discovered at one run
-						#the discrepancy would reflect the biochemical difference between group 1 and group 2 FBX proteins
 						true_x2<-length(true_positive[true_positive%in%rownames(x2)])	
 						true_x2_rate<-true_x2/dim(x2)[1]
 			
 						true_y1<-length(true_positive[true_positive%in%rownames(y1)])	
 						true_y1_rate<-true_y1/dim(y1)[1]
 			
-						true_y2<-length(true_positive[true_positive%in%rownames(y2)])	
-						true_y2_rate<-true_y2/dim(y2_test)[1]
-
-						true_prediction_rate<-cbind(true_x1_rate,true_x2_rate,true_y1_rate,true_y2_rate)
+						true_prediction_rate<-cbind(true_x2_rate,true_y1_rate)
 	
 						true_prediction<-rbind(true_prediction,true_prediction_rate)			
 		
@@ -344,8 +320,6 @@
 		#prediction
 		constant_positive_prediction<-c()
 		constant_negative_prediction<-c()
-		#constant_top_ten_percent<-c()
-		#constant_bottom_ten_percent<-c()
 		
 		mean_accuracy<-c()
 		mean_true_prediction<-c()
@@ -355,7 +329,7 @@
 	
 		for(j in 1:10){
 		
-				#
+				
 				accuracy<-c()
 				positive<-c()
 				negative<-c()
@@ -410,8 +384,7 @@
 						
 						###########
 						
-						testdata<-rbind(validate_x1,y2_test,testdata)
-							
+										
 						# test
 						
 						test <- predict(model, newdata = testdata[,-1], type = "class")
@@ -423,22 +396,16 @@
 						positive<-rbind(positive,as.matrix(true_positive))
 						negative<-rbind(negative,as.matrix(true_negative))
 
-						#how often are group 1 FBX genes discovered at one run
-						true_x1<-length(true_positive[true_positive%in%rownames(x1)])	
-						true_x1_rate<-true_x1/dim(validate_x1)[1]
-		
+			
 						#how often are group 2 FBX genes discovered at one run
-						#the discrepancy would reflect the biochemical difference between group 1 and group 2 FBX proteins
 						true_x2<-length(true_positive[true_positive%in%rownames(x2)])	
 						true_x2_rate<-true_x2/dim(x2)[1]
 				
 						true_y1<-length(true_positive[true_positive%in%rownames(y1)])	
 						true_y1_rate<-true_y1/dim(y1)[1]
 				
-						true_y2<-length(true_positive[true_positive%in%rownames(y2)])	
-						true_y2_rate<-true_y2/dim(y2_test)[1]
-	
-						true_prediction_rate<-cbind(true_x1_rate,true_x2_rate,true_y1_rate,true_y2_rate)
+			
+						true_prediction_rate<-cbind(true_x2_rate,true_y1_rate)
 		
 						true_prediction<-rbind(true_prediction,true_prediction_rate)	
 						
@@ -501,34 +468,34 @@
  	           paired = FALSE, var.equal = FALSE, conf.level = 0.95)
  
 			   					#
-					#			Welch Two Sample t-test
+				#				Welch Two Sample t-test
 
-					#		data:  ann_mean_accuracy_nm and rf_mean_accuracy_nm
-					#		t = 2528.3, df = 17.6, p-value < 2.2e-16
-					#		alternative hypothesis: true difference in means is greater than 0
-					#		95 percent confidence interval:
-					#		 0.0008692097          Inf
-					#		sample estimates:
-					#		  mean of x   mean of y 
-					#		0.003285882 0.002416075 
-
+				#			data:  ann_mean_accuracy_nm and rf_mean_accuracy_nm
+				#			t = 1367.7, df = 17.732, p-value < 2.2e-16
+				#			alternative hypothesis: true difference in means is greater than 0
+				#			95 percent confidence interval:
+				#			 0.0007548802          Inf
+				#			sample estimates:
+				#			  mean of x   mean of y 
+				#			0.003166187 0.002410347 
+						
+						
 	#
 	
  	t.test(ann_mean_accuracy_nm, svm_mean_accuracy_nm, alternative = c("greater"), mu = 0, 
  	           paired = FALSE, var.equal = FALSE, conf.level = 0.95)
  							
 			   					#
-					#			Welch Two Sample t-test
+				#				Welch Two Sample t-test
 
-					#		data:  ann_mean_accuracy_nm and svm_mean_accuracy_nm
-					#		t = 4666.8, df = 15.32, p-value < 2.2e-16
-					#		alternative hypothesis: true difference in means is greater than 0
-					#		95 percent confidence interval:
-					#		 0.001241992         Inf
-					#		sample estimates:
-					#		  mean of x   mean of y 
-					#		0.003285882 0.002043425 
-								
+				#			data:  ann_mean_accuracy_nm and svm_mean_accuracy_nm
+				#			t = 2283.5, df = 15.321, p-value < 2.2e-16
+				#			alternative hypothesis: true difference in means is greater than 0
+				#			95 percent confidence interval:
+				#			 0.001122137         Inf
+				#			sample estimates:
+				#			  mean of x   mean of y 
+				#			0.003166187 0.002043189 
 		
 	
 	#####################
@@ -652,165 +619,3 @@
 
 		grid.draw(venn.plot);
 	dev.off();
-
-		
-
-	########################
-	
-
-	data0 <- read.table("Data_S3_fbx_multi_dimensional_features.tab",header= T)
-	data0 <-data0[,-1]
-		
-	data0<-data0[,-c(6:11,14:23)]
-	colnames(data0)
-	
-			#    [1] "group"          "Publications"   "EST"            "cDNA"          
-		#    [5] "Intron"         "kaks"           "ks"             "fbx_exp_mean"  
-		#    [9] "fbx_exp_median" "fbx_exp_max"    "fbx_exp_cv" 
-
-	#library
-	library(naniar)
-	library(randomForest)
-
-	#group data
-	x1 <- data0[data0$group==1,]
-	x2 <- data0[data0$group==2,]
-	y1 <- data0[data0$group==3,]
-	y2 <- data0[data0$group==4,]
-	
-	
-	#prediction
-	constant_positive_prediction<-c()
-	constant_negative_prediction<-c()
-#	constant_top_ten_percent<-c()
-#	constant_bottom_ten_percent<-c()
-	
-	mean_accuracy<-c()
-	mean_true_prediction<-c()
-	mean_false_n_p_rates<-c()		
-
-	
-
-	for(j in 1:10){  #10 rounds
-	
-			#
-			accuracy<-c()
-			positive<-c()
-			negative<-c()
-			true_prediction<-c()
-			false_n_p_rates<-c()
-	
-			
-			for (i in 1:1000){  #1000 resampling
-							
-					sample <-sample(nrow(y2),size=123,replace=F,)
-					y2_tr_va <- y2[sample, ] # validate
-					y2_test<-y2[-sample,]
-	
-					#we treat groups 2 and 3 FBX genes as unknown for testing
-					testdata <-rbind(x2,y1) 
-	
-					tr_va <- rbind(x1,y2_tr_va)       ###########  (tr)an+(va)lide dataset
-
-					#we take train/validate=2:1 ratio
-					number <- sample(nrow(tr_va), size =109, replace = F, )
-					train <- tr_va[number,] 
-					validate <- tr_va[-number,]  
-
-					rand<-sample(seq(from=2000,to=30000,by=1),1,replace=F)
-					set.seed(rand)
-								
-					validate_x1<-validate[rownames(validate)%in%rownames(x1),] 
-					validate_y2<-validate[rownames(validate)%in%rownames(y2),] 
-			 		
-					
-			 		############
-					train$group <- as.factor(train$group)
-					features <- setdiff( x = names(train), y = "group")
-	
-					
-					#### run model
-					model <- randomForest(group ~., data=train, ntree=500, mtry=10,       ### ntree=500 as default
-					                      do.trace=100, na.action = na.roughfix)
-					
-			
-					
-					
-					######
-					val_pred <- predict(object = model, newdata = validate[,-1])
-					
-					tab <- table(val_pred, validate[,1])
-					accu<-sum(diag(tab))/sum(tab)
-					accuracy<-rbind(accuracy,accu)
-
-					false_n_p<-cbind(tab[1,2]/dim(validate_x1)[1],tab[2,1]/dim(validate_y2)[1])						
-					false_n_p_rates<-rbind(false_n_p_rates,false_n_p)						
-					
-					###########
-					
-					testdata<-rbind(validate_x1,y2_test,testdata)
-			
-					# test
-					test <- predict(object = model, newdata = testdata[,-1])
-										
-					true_positive<-names(test[test==1])
-					true_negative<-names(test[test==4])
-				
-					positive<-rbind(positive,as.matrix(true_positive))
-					negative<-rbind(negative,as.matrix(true_negative))
-
-					#how often are group 1 FBX genes discovered at one run
-					true_x1<-length(true_positive[true_positive%in%rownames(x1)])	
-					true_x1_rate<-true_x1/dim(validate_x1)[1]
-	
-					#how often are group 2 FBX genes discovered at one run
-					#the discrepancy would reflect the biochemical difference between group 1 and group 2 FBX proteins
-					true_x2<-length(true_positive[true_positive%in%rownames(x2)])	
-					true_x2_rate<-true_x2/dim(x2)[1]
-			
-					true_y1<-length(true_positive[true_positive%in%rownames(y1)])	
-					true_y1_rate<-true_y1/dim(y1)[1]
-			
-					true_y2<-length(true_positive[true_positive%in%rownames(y2)])	
-					true_y2_rate<-true_y2/dim(y2_test)[1]
-
-					true_prediction_rate<-cbind(true_x1_rate,true_x2_rate,true_y1_rate,true_y2_rate)
-	
-					true_prediction<-rbind(true_prediction,true_prediction_rate)	
-					
-					}
-					
-				#
-				mean_accuracy<-rbind(mean_accuracy,mean(accuracy))
-	
-				mean_true_prediction<-rbind(mean_true_prediction,colMeans(true_prediction))
-				mean_false_n_p_rates<-rbind(mean_false_n_p_rates,colMeans(false_n_p_rates))
-	
-				constant_positive<-predict_stat(positive)	
-				constant_negative<-predict_stat(negative)
-				
-				constant_positive_prediction<-rbind(constant_positive_prediction,constant_positive)
-		
-				constant_negative_prediction<-rbind(constant_negative_prediction,constant_negative)
-				
-		}		
-	
-	
-	
-		
-		rf_m2_negative_predictions<-as.matrix(table(rownames(constant_negative_prediction)))					
-		rf_m2_negative_predictions<-rf_m2_negative_predictions[rf_m2_negative_predictions[,1]>9,]
-		rf_negative_names<-names(rf_m2_negative_predictions)
-
-		rf_m2_positive_predictions<-as.matrix(table(rownames(constant_positive_prediction)))					
-		rf_m2_positive_predictions<-rf_m2_positive_predictions[rf_m2_positive_predictions[,1]>9,]
-		rf_positive_names<-names(rf_m2_positive_predictions)
-		
-		rf_mean_accuracy<-mean_accuracy
-		rf_mean_true_prediction<-mean_true_prediction
-		rf_mean_false_n_p_rates<-mean_false_n_p_rates
-
-	
-
-
-
