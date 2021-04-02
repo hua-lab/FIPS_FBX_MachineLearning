@@ -1,7 +1,6 @@
 	
 #libraries
 
-	#library("dplyr")
 	library("tidyr")
 	library("gplots")
 	library("ConsensusClusterPlus")
@@ -9,7 +8,7 @@
 	library("neuralnet")
 	
 
-	# domain predicitons for each FBX protein sequence
+	# domain predictions for each FBX protein sequence
 	dms<-read.table("Data_S2_FBX_domian_information.tab",header=T)
 
 	# there are several FBXD HMM files which make slightly differnt predictions
@@ -20,7 +19,7 @@
 	dms<-dms %>% separate(range, c("str","end"), sep = "[-]")
 	
 	#this study focuses on the FBX genes that have been annotated in TAIR and predicted in our previous study 
-	#published in PLoS One (Hua et al., 2011).  14 were removed due to missing of an FBXD upon reannotaion 
+	#published in PLoS One (Hua et al., 2011) and IJMS (Hua, 2021).  14 were removed due to missing of an FBXD upon reannotaion 
 	unique_fbxes<-unique(dms$PLoS_One_ID)
 	length(unique_fbxes) #[1] 696
 	
@@ -52,7 +51,7 @@
 
 ##########################################################################
 #																		 #
-# Figure 1	compare c-terminal domain frequency in four mannualy         #
+# Figure 1	compare c-terminal domain frequency in four manually         #
 #           defined groups according to prior studies					 #
 #																		 #
 ##########################################################################
@@ -181,10 +180,9 @@
 #																		 #
 ##########################################################################
 #functions
-
-		#
 	
-		#We select top 5% prections as confident candidates		
+		#  We select the fbx genes predicted in >950 out of 1000 times of resampling 
+		#  as confident candidates		
 	
 		predict<-function(predicted){
 					
@@ -202,7 +200,7 @@
 		# Distribution of four groups of FBXes in Km clusters
 		
 		group_in_clusters_fun<-function(clusters){
-			#
+			
 			group_in_clusters<-c()
 
 			for(i in 1:4){
@@ -306,8 +304,8 @@
 			dev.off()						
 	##########
 
-		#
-		library("ggbiplot")
+		
+		#library("ggbiplot")
 				 	
 		fbx_seq_infor_wo_agi_m1_df.pca <- prcomp(fbx_seq_infor_wo_agi_m1_df, center = TRUE, scale. = TRUE)
 
@@ -368,8 +366,8 @@
 
 		x1<-x[1:41,]
 		x2<-x[42:dim(x)[1],]
-		y1<-y[1:469,]
-		y2<-y[470:dim(y)[1],]
+		y1<-y[1:470,]
+		y2<-y[471:dim(y)[1],]
 	
 	
 		
@@ -377,16 +375,17 @@
 
 		#training and neural decision tree
 	
-		###### sample and splite data
+		###### sample and split data
 	
-		#we treat group 4 FBX as non functional (marked as 0) due to the lack of any studies
-		#We consider group 1 FBXes as truly FBX proteins (marked as 1) since both biochemical and functional studies have been done
-		#since there are 38 group 1 FBXes, we took 3 x 38 = 114 group 4 to combine with group 1 as training and validating datasets
+		#we treat group 4 FBXes as non functional (marked as 0) due to the lack of any studies
+		#We consider group 1 FBXes as active FBX proteins (marked as 1) since both biochemical and functional studies have been done.	
+		#Since there are 41 group 1 FBXes, we took 3 x 41 = 123 group 4 FBXes to combine with group 1 as training and validating datasets
+		
 		sample <-sample(nrow(y2),size=123,replace=F,)
 		y2_tr_va <- y2[sample, ] # train_validate
 	
-		#we treat groups 2 and 3 FBX genes as unknown for testing
-		testdata <-rbind(x2,y1,y2[-sample, ]) 
+		#we treat groups 2 and 3 FBX genes as unknown samples for testing
+		testdata <-rbind(x2,y1) 
 	
 		tr_va <- rbind(x1,y2_tr_va)       ###########  (tr)an+(va)lide dataset
 
@@ -407,8 +406,9 @@
 
 
 		##############
-	
-			#
+		# "positive" means "functionally active"
+		# "negative" means "functionally inactive"
+			
 		constant_positive_prediction<-c()
 		constant_negative_prediction<-c()
 		constant_top_ten_percent<-c()
@@ -432,7 +432,6 @@
 			
 					sample <-sample(nrow(y2),size=123,replace=F,)
 					y2_tr_va <- y2[sample, ] # validate
-					y2_test<-y2[-sample,]
 	
 					#we treat groups 2 and 3 FBX genes as unknown for testing
 					testdata <-rbind(x2,y1) 
@@ -464,42 +463,32 @@
 					false_n_p_rates<-rbind(false_n_p_rates,false_n_p)
 
 			         #### final test ####
-		 
-					 #we combine validating FBXes of group 1 and y2_test with testdata as an internal control 
-					 #to further examine false negative and positive rates	 
-					testdata<-rbind(validate_x1,y2_test,testdata)
-			
+		 	
 					# test
 					test <- compute(nn, testdata[, -1])
 					test_prediction <- test$net.result
 					test_prediction_adj <- ifelse(test_prediction>0.5, 1, 0)
-			
+				
 					rownames(test_prediction_adj)<-rownames(test_prediction)	
 					true_positive<-names(test_prediction_adj[test_prediction_adj[,1]>0,])
 					true_negative<-names(test_prediction_adj[test_prediction_adj[,1]<1,])
-				
+					
 					positive<-rbind(positive,as.matrix(true_positive))
 					negative<-rbind(negative,as.matrix(true_negative))
 
-					#how often are group 1 FBX genes discovered at one run
-					true_x1<-length(true_positive[true_positive%in%rownames(x1)])	
-					true_x1_rate<-true_x1/dim(validate_x1)[1]
-	
-					#how often are group 2 FBX genes discovered at one run
-					#the discrepancy would reflect the biochemical difference between group 1 and group 2 FBX proteins
+			
+					#how often are FBX genes discovered as active members at one run
 					true_x2<-length(true_positive[true_positive%in%rownames(x2)])	
 					true_x2_rate<-true_x2/dim(x2)[1]
-			
+				
 					true_y1<-length(true_positive[true_positive%in%rownames(y1)])	
 					true_y1_rate<-true_y1/dim(y1)[1]
-			
-					true_y2<-length(true_positive[true_positive%in%rownames(y2)])	
-					true_y2_rate<-true_y2/dim(y2_test)[1]
+				
 
-					true_prediction_rate<-cbind(true_x1_rate,true_x2_rate,true_y1_rate,true_y2_rate)
-	
-					true_prediction<-rbind(true_prediction,true_prediction_rate)			
+					true_prediction_rate<-cbind(true_x2_rate,true_y1_rate)
 		
+					true_prediction<-rbind(true_prediction,true_prediction_rate)			
+				
 					}
 	
 			mean_accuracy<-rbind(mean_accuracy,mean(accuracy))
@@ -644,9 +633,7 @@
 				#
 			#    [1] "group"          "Publications"   "EST"            "cDNA"          
 			#    [5] "Intron"         "kaks"           "ks"             "fbx_exp_mean"  
-			#    [9] "fbx_exp_median" "fbx_exp_max"    "fbx_exp_cv"   
-		
-	
+			#    [9] "fbx_exp_median" "fbx_exp_max"    "fbx_exp_cv"   	
 	
 		x<-scaleddata[1:82,]
 		y<-scaleddata[83:692,]
@@ -666,22 +653,23 @@
 
 		x1<-x[1:41,]
 		x2<-x[42:dim(x)[1],]
-		y1<-y[1:469,]
-		y2<-y[470:dim(y)[1],]
+		y1<-y[1:470,]
+		y2<-y[471:dim(y)[1],]
 		################################################################################################
 
 		#training and neural decision tree
 		
 		###### sample and splite data
+	
+		#we treat group 4 FBXes as non functional (marked as 0) due to the lack of any studies
+		#We consider group 1 FBXes as active FBX proteins (marked as 1) since both biochemical and functional studies have been done	
+		#Since there are 41 group 1 FBXes, we took 3 x 41 = 123 group 4 FBXes to combine with group 1 as training and validating datasets
 		
-		#we treat group 4 FBX as non functional (marked as 0) due to the lack of any studies
-		#We consider group 1 FBXes as truly FBX proteins (marked as 1) since both biochemical and functional studies have been done
-		#since there are 38 group 1 FBXes, we took 3 x 38 = 114 group 4 to combine with group 1 as training and validating datasets
 		sample <-sample(nrow(y2),size=123,replace=F,)
 		y2_tr_va <- y2[sample, ] # validate
 		
 		#we treat groups 2 and 3 FBX genes as unknown for testing
-		testdata <-rbind(x2,y1,y2[-sample, ]) 
+		testdata <-rbind(x2,y1) 
 		
 		tr_va <- rbind(x1,y2_tr_va)       ###########  (tr)an+(va)lide dataset
 
@@ -702,9 +690,9 @@
 
 
 ############## neural network predictions 
+		# "positive" means "functionally active"
+		# "negative" means "functionally inactive"
 		
-		
-		#
 		constant_positive_prediction<-c()
 		constant_negative_prediction<-c()
 		constant_top_ten_percent<-c()
@@ -728,8 +716,7 @@
 				
 					sample <-sample(nrow(y2),size=123,replace=F,)
 					y2_tr_va <- y2[sample, ] # validate
-					y2_test<-y2[-sample,]
-		
+							
 					#we treat groups 2 and 3 FBX genes as unknown for testing
 					testdata <-rbind(x2,y1) 
 		
@@ -761,9 +748,6 @@
 
 			         #### final test ####
 			 
-					 #we combine validating FBXes of group 1 and y2_test with testdata as an internal control 
-					 #to further examine false negative and positive rates	 
-					testdata<-rbind(validate_x1,y2_test,testdata)
 				
 					# test
 					test <- compute(nn, testdata[, -1])
@@ -777,22 +761,16 @@
 					positive<-rbind(positive,as.matrix(true_positive))
 					negative<-rbind(negative,as.matrix(true_negative))
 
-					#how often are group 1 FBX genes discovered at one run
-					true_x1<-length(true_positive[true_positive%in%rownames(x1)])	
-					true_x1_rate<-true_x1/dim(validate_x1)[1]
-		
-					#how often are group 2 FBX genes discovered at one run
-					#the discrepancy would reflect the biochemical difference between group 1 and group 2 FBX proteins
+			
+					#how often are FBX genes discovered as active members at one run
 					true_x2<-length(true_positive[true_positive%in%rownames(x2)])	
 					true_x2_rate<-true_x2/dim(x2)[1]
 				
 					true_y1<-length(true_positive[true_positive%in%rownames(y1)])	
 					true_y1_rate<-true_y1/dim(y1)[1]
 				
-					true_y2<-length(true_positive[true_positive%in%rownames(y2)])	
-					true_y2_rate<-true_y2/dim(y2_test)[1]
-	
-					true_prediction_rate<-cbind(true_x1_rate,true_x2_rate,true_y1_rate,true_y2_rate)
+
+					true_prediction_rate<-cbind(true_x2_rate,true_y1_rate)
 		
 					true_prediction<-rbind(true_prediction,true_prediction_rate)			
 			
@@ -820,28 +798,19 @@
 		
 		m1_m2_positive_predictions<-m1_positive_predictions[names(m1_positive_predictions)%in%names(m2_positive_predictions)]
 		
-		length(m1_m2_positive_predictions) #42
-		length(m2_positive_predictions) #49
+		length(m1_m2_positive_predictions) #43
+		length(m2_positive_predictions) #50
 		
 		
-		#compair with Km clustering
+		#Compare with Km clustering
 		m2_positive_predictions_in_km_clusters<-clusters_10features[rownames(clusters_10features)%in%names(m2_positive_predictions),]
 		table(m2_positive_predictions_in_km_clusters[,2])/sum(table(m2_positive_predictions_in_km_clusters[,2]))
 
 					#
 			#        c_1       c_2 
-			#   0.4489796 0.5510204 
+			#  		 0.46 0.54
 			
-		
-		m2_negative_predictions_in_km_clusters<-clusters_10features[rownames(clusters_10features)%in%names(m2_negative_predictions),]	
-		table(m2_negative_predictions_in_km_clusters[,2])/sum(table(m2_negative_predictions_in_km_clusters[,2]))
-		
-					#
-			#        c_2        c_3 
-			# 0.08298755 0.91701245 
 			
-
-		
 		positive_names<-names(m2_positive_predictions)		
 		group1_names<-rownames(group1)
 				
@@ -851,7 +820,16 @@
 		m2_negative_predictions<-as.matrix(table(rownames(constant_negative_prediction)))		
 		m2_negative_predictions<-m2_negative_predictions[m2_negative_predictions[,1]>9,]
 		
-		length(m2_negative_predictions) #[1] 239
+		length(m2_negative_predictions) #[1] 240
+		
+		m2_negative_predictions_in_km_clusters<-clusters_10features[rownames(clusters_10features)%in%names(m2_negative_predictions),]	
+		table(m2_negative_predictions_in_km_clusters[,2])/sum(table(m2_negative_predictions_in_km_clusters[,2]))
+		
+					#
+			#        c_2        c_3 
+			# 0.07916667 0.92083333 
+			
+		
 		
 		m1_m2_negative_predictions<-m1_negative_predictions[names(m1_negative_predictions)%in%names(m2_negative_predictions)]
 		
@@ -902,17 +880,17 @@
 	           paired = FALSE, var.equal = FALSE, conf.level = 0.95)
 		   
 				   		#
-			#			Welch Two Sample t-test
+				#		Welch Two Sample t-test
 
-			#		data:  m1_mean_accuracy and m2_mean_accuracy
-			#		t = -650.79, df = 17.999, p-value < 2.2e-16
-			#		alternative hypothesis: true difference in means is less than 0
-			#		95 percent confidence interval:
-			#		      -Inf -4.771615
-			#		sample estimates:
-			#		mean of x mean of y 
-			#		 90.17364  94.95800 
-
+				#	data:  m1_mean_accuracy and m2_mean_accuracy
+				#	t = -816.47, df = 13.713, p-value < 2.2e-16
+				#	alternative hypothesis: true difference in means is less than 0
+				#	95 percent confidence interval:
+				#	      -Inf -4.778019
+				#	sample estimates:
+				#	mean of x mean of y 
+				#	 90.16800  94.95636 
+				
 			
 		
 # 2) False predictions	
@@ -952,14 +930,14 @@
 					#			Welch Two Sample t-test
 
 					#		data:  m1_false_n and m2_false_n
-					#		t = 182.03, df = 13.486, p-value < 2.2e-16
+					#		t = 449.75, df = 14.736, p-value < 2.2e-16
 					#		alternative hypothesis: true difference in means is greater than 0
 					#		95 percent confidence interval:
-					#		 8.143135      Inf
+					#		 8.23657     Inf
 					#		sample estimates:
 					#		mean of x mean of y 
-					#		 21.66717  13.44426 
-		
+					#		 21.70636  13.43753 
+					
 		#False positive 								
    	  	t.test(m1_false_p, m2_false_p, alternative = c("greater"), mu = 0, 
   	  	           paired = FALSE, var.equal = FALSE, conf.level = 0.95)
@@ -968,22 +946,21 @@
 					#		Welch Two Sample t-test
 
 					#		data:  m1_false_p and m2_false_p
-					#		t = 360.86, df = 17.857, p-value < 2.2e-16
+					#		t = 437.31, df = 18, p-value < 2.2e-16
 					#		alternative hypothesis: true difference in means is greater than 0
 					#		95 percent confidence interval:
-					#		 3.781026      Inf
+					#		 3.777817      Inf
 					#		sample estimates:
 					#		mean of x mean of y 
-					#		 5.950868  2.151577 
-					  				  
-
+					#		 5.946796  2.153939 
+					
 	
 #3) Prediction rates
 
-		m1_x2_prediction<-m1_prediction_rates[,2]*100
-		m1_y1_prediction<-m1_prediction_rates[,3]*100
-		m2_x2_prediction<-m2_prediction_rates[,2]*100
-		m2_y1_prediction<-m2_prediction_rates[,3]*100
+		m1_x2_prediction<-m1_prediction_rates[,1]*100
+		m1_y1_prediction<-m1_prediction_rates[,2]*100
+		m2_x2_prediction<-m2_prediction_rates[,1]*100
+		m2_y1_prediction<-m2_prediction_rates[,2]*100
 			
 		
 		m1_x2_predictino_df<-data.frame(Measure=m1_x2_prediction,Group="m1_x2")
@@ -1011,16 +988,17 @@
 		  	           paired = FALSE, var.equal = FALSE, conf.level = 0.95)
 		   
 		  				   		#
-					#			Welch Two Sample t-test
+						#		Welch Two Sample t-test
 
-					#			data:  m1_x2_prediction and m2_x2_prediction
-					#			t = 116.61, df = 16.624, p-value < 2.2e-16
-					#			alternative hypothesis: true difference in means is greater than 0
-					#			95 percent confidence interval:
-					#			 2.035234      Inf
-					#			sample estimates:
-					#			mean of x mean of y 
-					#			 65.18366  63.11756 
+						#	data:  m1_x2_prediction and m2_x2_prediction
+						#	t = 170.33, df = 10.935, p-value < 2.2e-16
+						#	alternative hypothesis: true difference in means is greater than 0
+						#	95 percent confidence interval:
+						#	 2.027891      Inf
+						#	sample estimates:
+						#	mean of x mean of y 
+						#	 65.17098  63.12146 
+							 
 	
 		#Group 3 prediction	rate (%)					
 	 
@@ -1031,31 +1009,54 @@
 					#		Welch Two Sample t-test
 
 					#	data:  m1_y1_prediction and m2_y1_prediction
-					#	t = 281.72, df = 17.071, p-value < 2.2e-16
+					#	t = 192.26, df = 9.0837, p-value < 2.2e-16
 					#	alternative hypothesis: true difference in means is greater than 0
 					#	95 percent confidence interval:
-					#	 2.808693      Inf
+					#	 2.789086      Inf
 					#	sample estimates:
 					#	mean of x mean of y 
-					#	 26.97162  24.14548 
-							
-	  						
-				
+					#	 26.96578  24.14987 
+						 
+					
 		#Final prediction list
 		
 		
-		x1_predictions<-m2_positive_predictions[names(m2_positive_predictions)%in%rownames(x1)]	
-		x2_predictions<-m2_positive_predictions[names(m2_positive_predictions)%in%rownames(x2)]	
-		y1_predictions<-m2_positive_predictions[names(m2_positive_predictions)%in%rownames(y1)]	
-		y2_predictions<-m2_positive_predictions[names(m2_positive_predictions)%in%rownames(y2)]	
+		x2_positive_predictions<-m2_positive_predictions[names(m2_positive_predictions)%in%rownames(x2)]	
+		y1_positive_predictions<-m2_positive_predictions[names(m2_positive_predictions)%in%rownames(y1)]	
 			
-		length(x1_predictions)
-		length(x2_predictions) #15
-		length(y1_predictions) #34
-		length(y2_predictions)
+		length(x2_positive_predictions) #15
+		length(y1_positive_predictions) #35
 		
 	
 	
+		###########
+		
+		x2_negative_predictions<-m2_negative_predictions[names(m2_negative_predictions)%in%rownames(x2)]	
+		y1_negative_predictions<-m2_negative_predictions[names(m2_negative_predictions)%in%rownames(y1)]	
+			
+		length(x2_negative_predictions) #4
+		length(y1_negative_predictions) #236
+		
+		
+		########### Write out the prediction result
+		x2_positive_group<-rep("Group II_Active",length(x2_positive_predictions))		
+		x2_positive<-cbind(names(x2_positive_predictions),x2_positive_group)
+		
+		x2_negative_group<-rep("Group II_Inactive",length(x2_negative_predictions))
+		x2_negative<-cbind(names(x2_negative_predictions),x2_negative_group)
+		
+		y1_positive_group<-rep("Group III_Active",length(y1_positive_predictions))		
+		y1_positive<-cbind(names(y1_positive_predictions),y1_positive_group)
+		
+		y1_negative_group<-rep("Group III_Inactive",length(y1_negative_predictions))
+		y1_negative<-cbind(names(y1_negative_predictions),y1_negative_group)
+		
+		
+		prediction<-rbind(x2_positive,x2_negative,y1_positive,y1_negative)
+		
+		colnames(prediction)<-c("FBX_ID","Activity_Prediction")
+		
+		write.csv(prediction,"ANN_predictions_w_10_characteristics.csv")
 		
 		
 		
